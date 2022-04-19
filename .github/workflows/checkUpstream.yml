@@ -11,47 +11,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  createMatrix:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    
-    steps:
-      - name: Checkout default branch
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Create matrix
-        id: set-matrix
-        run: |
-          matrix=$(
-          echo {\
-            $(.github/helperScripts/remoteBranchNamesToJSON.sh)", "\
-            $(.github/helperScripts/tomcatVersions.sh)", "\
-            $(.github/helperScripts/jdkVersions.sh)\
-          }\
-          )
-          echo $matrix
-          echo "::set-output name=matrix::$matrix"
-
-  verifyMatrix:
-    runs-on: ubuntu-latest
-    needs: createMatrix
-    steps:
-      - name: Verify matrix
-        run: |
-          matrix='${{ needs.createMatrix.outputs.matrix }}'
-          echo $matrix
 
   checkUpstream:
     runs-on: ubuntu-latest
-    needs: createMatrix
-    strategy:
-      matrix: ${{ fromJson(needs.createMatrix.outputs.matrix) }}
 
     steps:
-
     - name: Set environment variables
       run: |
         echo "scriptsdir=.github/helperScripts" >> $GITHUB_ENV
@@ -67,30 +31,26 @@ jobs:
         git branch -a
         git remote -v
 
-    - name: Check matrix outputs
+    - name: Grab the most recent upstream version:
       run: |
-        echo "Branch: ${{ matrix.branch }} Tomcat: ${{ matrix.tomcat }} JDK: ${{ matrix.jdk }}"
+        echo $( ${{ env.scriptsdir }}/dockertags.sh rockylinux | grep -v "latest" | sort -Vr)
+        upstream=$( ${{ env.scriptsdir }}/dockertags.sh rockylinux | grep -v "latest" | sort -Vr | head -n1)
+        echo $upstream
+        echo "upstream=$upstream" >> $GITHUB_ENV
 
-    - name: Grab the most recent upstream tomcat version
+    - name: Update to most recent version, if necessary
       run: |
-        upstreamtomcat=$( ${{ env.scriptsdir }}/dockertags.sh tomcat | ${{ env.scriptsdir }}/findTomcatVersion.sh ${{matrix.tomcat}} ${{ matrix.jdk }})
-        echo $upstreamtomcat
-        echo "upstreamtomcat=$upstreamtomcat" >> $GITHUB_ENV
-
-    - name: Does most recent version exist
-      run: |
-        echo ${{ env.upstreamtomcat }}
+        echo ${{ env.upstream }}
         git branch -a
-        git branch -a | grep "${{ env.upstreamtomcat }}" &&
-        echo "Already up to date with Tomcat ${{ env.upstreamtomcat }}" ||
+        git branch -a | grep "${{ env.upstream }}" &&
+        echo "Already up to date with upstream: ${{ env.upstream }}" ||
         {
-        echo "New Tomcat version ${{ env.upstreamtomcat }}"
-        git branch -r | ${{ scriptsdir }}/findTomcatVersion.sh ${{ matrix.tomcat }} ${{ matrix.jdk }} 
-        echo "Psuedocode: Find most up to date tomcat version ${{ matrix.tomcat }} with jdk version ${{ matrix.jdk }}" &&
-        echo "Psuedocode: Branch off of most recent version in repo"
-
-    - name: Update Dockerfiles
-      run: echo "Update Dockerfiles"
-
-    - name: Commit and push changes
-      run: echo "Commit and push changes"
+        echo "New upstream version ${{ env.upstream }}"
+        current=$(git branch -r | grep -v "latest" | sort -Vr | head -n1)
+        echo "Most recent unidata/rockylinux version: $current"
+        git checkout -b ${{ env.upstream }} $current
+        git status
+        sed -e "s/from rockylinux:.*/from rockylinux:$upstream/g" Dockerfile -i
+        cat Dockerfile
+        echo "Now to figure out how to commit and push changes..."
+        }
