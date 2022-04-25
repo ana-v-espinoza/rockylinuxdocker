@@ -1,6 +1,15 @@
 #######################################################
 # Check dockerhub for updates to the tomcat container #
 #######################################################
+#
+################################################
+# NECESSARY GITHUB SECRETS TO SET              #
+################################################
+# secrets.imagename : e.g "<org>/<image>"
+# secrets.registryuser
+# secrets.registrypwd
+# secrets.server : (not currently implemented)
+################################################
 
 name: Check For Upstream Updates
 
@@ -60,9 +69,9 @@ jobs:
       run: |
         echo "New upstream version ${{ env.upstream }}"
         current=$(git branch -r | grep -v "latest" | sort -Vr | head -n1)
-        echo "Most recent unidata/rockylinux version: $current"
+        echo "Most recent unidata/rockylinux version found at: $current"
+        echo "Creating new branch from $current ..."
         git checkout -b ${{ env.upstream }} $current
-        git status
         sed -e "s/from rockylinux:.*/from rockylinux:${{ env.upstream }}/g" Dockerfile -i
         grep "from" Dockerfile
 
@@ -74,10 +83,7 @@ jobs:
       if: ${{ env.up2date != true }}
       run: |
         docker run ${{ secrets.imagename }}:${{ env.tag }} | \
-        grep "Build succesful!" && exit 0 || exit 1
-
-    - name: Purposefully pass a step
-      run: "exit 0"
+        grep "Build successful!" && exit 0 || exit 1
 
     - name: Push to git
       if: ${{ env.up2date != true }}
@@ -85,9 +91,13 @@ jobs:
         git config --global user.name 'Github Actions'
         git config --global user.email 'respinoza@ucar.edu'
         git add . && git commit -m "Update to rockylinux:${{ env.upstream }}" && \
-        echo "git push origin ${{ env.upstream }}"
+        git push origin ${{ env.upstream }}
 
     - name: Push to dockerhub
       if: ${{ env.up2date != true }}
       run: |
-        echo Pushing to dockerhub....
+        docker logout
+        echo ${{ secrets.registrypwd }} | docker login -u ${{ secrets.registryuser }} --password-stdin
+        docker push ${{ secrets.imagename }}:${{ env.tag }} &&
+        { docker logout && echo "Successfully pushed ${{ secrets.imagename }}:${{ env.tag }}"; } ||
+        { docker logout && echo "Docker push failed" && exit 1; }
