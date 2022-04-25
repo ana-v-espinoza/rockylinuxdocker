@@ -71,14 +71,16 @@ jobs:
       run: docker build --no-cache -t ${{ secrets.imagename }}:${{ env.tag }} .
 
     - name: Test container
+      if: ${{ env.up2date != true }}
       run: |
         docker run ${{ secrets.imagename }}:${{ env.tag }} | \
-        grep "Build successful!" && exit 0 || exit 1
+        grep "Build succesful!" && exit 0 || exit 1
 
     - name: Purposefully pass a step
       run: "exit 0"
 
     - name: Push to git
+      if: ${{ env.up2date != true }}
       run: |
         git config --global user.name 'Github Actions'
         git config --global user.email 'respinoza@ucar.edu'
@@ -86,5 +88,6 @@ jobs:
         echo "git push origin ${{ env.upstream }}"
 
     - name: Push to dockerhub
+      if: ${{ env.up2date != true }}
       run: |
         echo Pushing to dockerhub....
