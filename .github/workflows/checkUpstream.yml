@@ -51,6 +51,9 @@ jobs:
     - name: Already up to date
       if: ${{ env.up2date }}
       run: |
+        echo "Huh? ${{ env.up2date }}"
+        echo "Checking for how to actually negate a boolean env variable: ${{ !env.up2date }}"
+        echo "Checking for how to actually negate a boolean env variable: ${{ ! env.up2date }}"
         echo "Already up to date with upstream: ${{ env.upstream }}"
 
     - name: Updating to newest version
