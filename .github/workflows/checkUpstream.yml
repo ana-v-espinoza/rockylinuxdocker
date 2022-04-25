@@ -19,6 +19,8 @@ jobs:
     - name: Set environment variables
       run: |
         echo "scriptsdir=.github/helperScripts" >> $GITHUB_ENV
+        tag=${{ github.ref }} && tag=${tag##*/}
+        echo "tag=${tag}" >> $GITHUB_ENV
 
     - name: Checkout default branch
       uses: actions/checkout@v2
@@ -51,26 +53,41 @@ jobs:
     - name: Already up to date
       if: ${{ env.up2date == true}}
       run: |
-        echo "Huh? ${{ env.up2date }}"
-        echo "Checking for how to actually negate a boolean env variable: ${{ env.up2date != true }}"
-        echo "Checking for how to actually negate a boolean env variable: ${{ env.up2date == false}}"
         echo "Already up to date with upstream: ${{ env.upstream }}"
 
-    - name: Updating to newest version
+    - name: Update Dockerfile
       if: ${{ env.up2date != true }}
       run: |
-        echo "Huh? ${{ env.up2date }}"
-        echo "Checking for how to actually negate a boolean env variable: ${{ env.up2date != true }}"
-        echo "Checking for how to actually negate a boolean env variable: ${{ env.up2date == false}}"
         echo "New upstream version ${{ env.upstream }}"
         current=$(git branch -r | grep -v "latest" | sort -Vr | head -n1)
         echo "Most recent unidata/rockylinux version: $current"
         git checkout -b ${{ env.upstream }} $current
         git status
         sed -e "s/from rockylinux:.*/from rockylinux:${{ env.upstream }}/g" Dockerfile -i
-        cat Dockerfile
+        grep "from" Dockerfile
+
+    - name: Build image
+      if: ${{ env.up2date != true }}
+      run: docker build --no-cache -t ${{ secrets.imagename }}:${{ env.tag }} .
+
+    - name: Test container
+      run: |
+        docker run ${{ secrets.imagename }}:${{ env.tag }} | \
+        grep "Build successful!" && exit 0 || exit 1
+
+    - name: Purposefully fail a step
+      run: "exit 1"
+
+    - name: Purposefully pass a step
+      run: "exit 0"
+
+    - name: Push to git
+      run: |
         git config --global user.name 'Github Actions'
         git config --global user.email 'respinoza@ucar.edu'
-        git add . && git commit -m "Update to rockylinux:${{ env.upstream }}" &&
-        echo "git push origin ${{ env.upstream }}"
-        }
+        git add . && git commit -m "Update to rockylinux:${{ env.upstream }}" && \
+        git push origin ${{ env.upstream }}
+
+    - name: Push to dockerhub
+      run: |
+        echo Pushing to dockerhub....

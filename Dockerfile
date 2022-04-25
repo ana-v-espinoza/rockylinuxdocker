@@ -21,3 +21,5 @@ ENV USER rocky
 RUN echo "rocky ALL=NOPASSWD: ALL" >> /etc/sudoers
 WORKDIR $HOME
 USER rocky
+
+CMD echo 'Build successful! For interactive mode, run as "docker run -it unidata/rocky /bin/bash"'
