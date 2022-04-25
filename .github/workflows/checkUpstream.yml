@@ -55,6 +55,7 @@ jobs:
 
     - name: Updating to newest version
       if: ${{ !env.up2date }}
+      run: |
         echo "New upstream version ${{ env.upstream }}"
         current=$(git branch -r | grep -v "latest" | sort -Vr | head -n1)
         echo "Most recent unidata/rockylinux version: $current"
