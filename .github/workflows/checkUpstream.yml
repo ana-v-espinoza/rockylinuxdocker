@@ -75,9 +75,6 @@ jobs:
         docker run ${{ secrets.imagename }}:${{ env.tag }} | \
         grep "Build successful!" && exit 0 || exit 1
 
-    - name: Purposefully fail a step
-      run: "exit 1"
-
     - name: Purposefully pass a step
       run: "exit 0"
 
@@ -86,7 +83,7 @@ jobs:
         git config --global user.name 'Github Actions'
         git config --global user.email 'respinoza@ucar.edu'
         git add . && git commit -m "Update to rockylinux:${{ env.upstream }}" && \
-        git push origin ${{ env.upstream }}
+        echo "git push origin ${{ env.upstream }}"
 
     - name: Push to dockerhub
       run: |
