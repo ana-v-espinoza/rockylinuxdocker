@@ -92,7 +92,7 @@ jobs:
         git config --global user.email 'respinoza@ucar.edu'
         git add . && git commit -m "Update to rockylinux:${{ env.upstream }}" && \
         git push origin ${{ env.upstream }}
-        git push origin latest
+        git push origin ${{ env.upstream }}:latest
 
     - name: Push to dockerhub
       if: ${{ env.up2date != true }}
