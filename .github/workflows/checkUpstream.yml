@@ -40,9 +40,9 @@ jobs:
 
     - name: Update to most recent version, if necessary
       run: |
-        echo ${{ env.upstream }}
-        git branch -a
-        git branch -a | grep "${{ env.upstream }}" &&
+        echo Latest upstream version: ${{ env.upstream }}
+        git branch --list "${{ env.upstream }}" | head -c1 | wc -c
+        test $(git branch --list "${{ env.upstream }}" | head -c1 | wc -c) -ne 0) &&
         echo "Already up to date with upstream: ${{ env.upstream }}" ||
         {
         echo "New upstream version ${{ env.upstream }}"
@@ -50,7 +50,10 @@ jobs:
         echo "Most recent unidata/rockylinux version: $current"
         git checkout -b ${{ env.upstream }} $current
         git status
-        sed -e "s/from rockylinux:.*/from rockylinux:$upstream/g" Dockerfile -i
+        sed -e "s/from rockylinux:.*/from rockylinux:${{ env.upstream }}/g" Dockerfile -i
         cat Dockerfile
-        echo "Now to figure out how to commit and push changes..."
+        git config --global user.name 'Github Actions'
+        git config --global user.email 'respinoza@ucar.edu'
+        git add . && git commit -m "Update to rockylinux:${{ env.upstream }}" &&
+        git push origin ${{ env.upstream }}
         }

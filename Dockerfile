@@ -17,6 +17,7 @@ RUN yum install -y sudo man man-pages vim nano git wget unzip ncurses procps \
 
 RUN useradd -ms /bin/bash rocky
 ENV HOME /home/rocky
+ENV USER rocky
 RUN echo "rocky ALL=NOPASSWD: ALL" >> /etc/sudoers
 WORKDIR $HOME
 USER rocky
