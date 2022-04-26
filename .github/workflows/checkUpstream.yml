@@ -1,5 +1,5 @@
 #######################################################
-# Check dockerhub for updates to the tomcat container #
+# Check dockerhub for updates to the rocky container  #
 #######################################################
 #
 ################################################
@@ -50,7 +50,6 @@ jobs:
     - name: Check if up to date
       run: |
         echo Latest upstream version: ${{ env.upstream }}
-        git branch -r --list "origin/${{ env.upstream }}" | head -c1 | wc -c
         test $(git branch -r --list "origin/${{ env.upstream }}" | head -c1 | wc -c) -ne 0 &&
         up2date=true || up2date=false
         echo "Up to date with latest version (${{ env.upstream }})?"
@@ -60,15 +59,11 @@ jobs:
     - name: Already up to date
       if: ${{ env.up2date == 'true'}}
       run: |
-        echo ${{ env.up2date }}
-        echo ${{ env.up2date == true }}
         echo "Already up to date with upstream: ${{ env.upstream }}"
 
-    - name: Update Dockerfile
+    - name: Checkout branch and update Dockerfile
       if: ${{ env.up2date != 'true' }}
       run: |
-        echo ${{ env.up2date }}
-        echo ${{ env.up2date == 'true' }}
         echo "tag=${{ env.upstream }}" >> $GITHUB_ENV
         echo "New upstream version ${{ env.upstream }}"
         current=$(git branch -r | grep -v "latest" | sort -Vr | head -n1)
