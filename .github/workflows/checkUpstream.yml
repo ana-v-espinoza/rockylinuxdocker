@@ -50,7 +50,7 @@ jobs:
     - name: Check if up to date
       run: |
         echo Latest upstream version: ${{ env.upstream }}
-        git branch --list "${{ env.upstream }}" | head -c1 | wc -c
+        git branch -r --list "origin/${{ env.upstream }}" | head -c1 | wc -c
         test $(git branch --list "${{ env.upstream }}" | head -c1 | wc -c) -ne 0 &&
         up2date=true || up2date=false
         echo "Up to date with latest version (${{ env.upstream }})?"
