@@ -51,7 +51,7 @@ jobs:
       run: |
         echo Latest upstream version: ${{ env.upstream }}
         git branch -r --list "origin/${{ env.upstream }}" | head -c1 | wc -c
-        test $(git branch -r --list "${{ env.upstream }}" | head -c1 | wc -c) -ne 0 &&
+        test $(git branch -r --list "origin/${{ env.upstream }}" | head -c1 | wc -c) -ne 0 &&
         up2date=true || up2date=false
         echo "Up to date with latest version (${{ env.upstream }})?"
         echo $up2date
