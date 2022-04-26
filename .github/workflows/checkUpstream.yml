@@ -65,8 +65,7 @@ jobs:
     - name: Update Dockerfile
       if: ${{ env.up2date != true }}
       run: |
-        tag=${{ github.ref }} && tag=${tag##*/}
-        echo "tag=${tag}" >> $GITHUB_ENV
+        echo "tag=${{ env.upstream }}" >> $GITHUB_ENV
         echo "New upstream version ${{ env.upstream }}"
         current=$(git branch -r | grep -v "latest" | sort -Vr | head -n1)
         echo "Most recent unidata/rockylinux version found at: $current"
@@ -99,6 +98,8 @@ jobs:
       run: |
         docker logout
         echo ${{ secrets.registrypwd }} | docker login -u ${{ secrets.registryuser }} --password-stdin
-        { docker push ${{ secrets.imagename }}:${{ env.tag }} && docker push ${{ secrets.imagename }}:latest ; } && \
+        { docker push ${{ secrets.imagename }}:${{ env.tag }} && \
+        docker tag ${{ secrets.imagename }}:${{ env.tag }} ${{ secrets.imagename }}:latest && \
+        docker push ${{ secrets.imagename }}:latest ; } && \
         { docker logout && echo "Successfully pushed ${{ secrets.imagename }}:${{ env.tag }}"; } ||
         { docker logout && echo "Docker push failed" && exit 1; }
