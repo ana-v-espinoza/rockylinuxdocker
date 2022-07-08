@@ -1,4 +1,4 @@
-from rockylinux:8.5.20220308
+from rockylinux:8.6.20227707
 
 ###
 # Update the system. Install stuff.
