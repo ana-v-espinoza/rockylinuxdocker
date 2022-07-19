@@ -14,9 +14,9 @@
 name: Check For Upstream Updates
 
 on:
-  schedule:
-    # Once a day at 00:00 UTC
-    - cron: '0 0 * * *'
+  #schedule:
+  #  # Once a day at 00:00 UTC
+  #  - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
